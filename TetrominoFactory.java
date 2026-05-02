@@ -1,12 +1,14 @@
 package com.mycompany.tetrisgame;
 
 import java.awt.Color;   //tetromino colour
-import java.util.Random; //randomiser
+import java.util.*; //randomiser
 
 /*factory to handle all details of piece generation and management,
 gameboard simply calls on a tetromino function*/
 public class TetrominoFactory {
-
+    
+    private static final List<String> bag = new ArrayList<>(); //randomiser bag
+    private static int bagIndex = 0; //init bag at zero for traversal
     private static final Random random = new Random();
 
     //piece type constants
@@ -36,10 +38,19 @@ public class TetrominoFactory {
         };
     }
 
-    public static Tetromino createRandom() { //creates random tetrimino
-        String type = ALL_TYPES[random.nextInt(ALL_TYPES.length)];
-        return create(type);
-    }
+    public static Tetromino createRandom() {
+        if (bagIndex >= bag.size()) {
+        refillBag(); //refils bag when traversed
+        }
+        return create(bag.get(bagIndex++));
+        }
+
+    private static void refillBag() {
+        bag.clear();
+        bag.addAll(Arrays.asList(ALL_TYPES));    //put all 7 types in
+        Collections.shuffle(bag, random);        //shuffle true randomly
+        bagIndex = 0;                            //reset the read head
+        }
 
     //concrete subclasses
     static class IPiece extends Tetromino {
