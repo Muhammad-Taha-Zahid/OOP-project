@@ -1,10 +1,12 @@
-import java.awt.*;
+package com.mycompany.tetrisgame;
+
+import java.awt.*;          //.awt numerous GUI elements
 import java.awt.event.*;
-import java.io.*;
+import java.io.*;           //.io and .nio needed to read-write files (highscores)
 import java.nio.file.*;
-import java.util.ArrayList;
+import java.util.ArrayList; //.util tracks line clear animations
 import java.util.List;
-import javax.swing.*;
+import javax.swing.*;       //platform independant GUI elements, buttons etc.
 
 /**
  * TetrisGame — Main class containing:
@@ -239,8 +241,9 @@ public class TetrisGame {
                         case KeyEvent.VK_LEFT  -> { SoundEffects.onMove();     moveLeft();     }
                         case KeyEvent.VK_RIGHT -> { SoundEffects.onMove();     moveRight();    }
                         case KeyEvent.VK_DOWN  -> { SoundEffects.onSoftDrop(); softDrop();     }
-                        case KeyEvent.VK_UP    -> { SoundEffects.onRotate();   rotatePiece();  }
+                        case KeyEvent.VK_UP    -> { SoundEffects.onRotate();   rotatePieceClock();  }
                         case KeyEvent.VK_SPACE -> { SoundEffects.onHardDrop(); hardDrop();     }
+                        case KeyEvent.VK_C     -> { SoundEffects.onRotate();   rotatePieceCounter();  }
                         case KeyEvent.VK_P     -> togglePause();
                         case KeyEvent.VK_ESCAPE -> frame.showStartScreen();
                     }
@@ -339,8 +342,23 @@ public class TetrisGame {
             }
         }
 
-        private void rotatePiece() {
+        private void rotatePieceClock() {
             currentPiece.rotateClockwise();
+            int[] offsets = {0, -1, 1, -2, 2};
+            boolean placed = false;
+            for (int dx : offsets) {
+                if (isValidPosition(currentPiece.getShape(), pieceX + dx, pieceY)) {
+                    pieceX += dx;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) currentPiece.rotateClockwise();
+        }
+        
+        
+        private void rotatePieceCounter() {
+            currentPiece.rotateCounterClockwise();
             int[] offsets = {0, -1, 1, -2, 2};
             boolean placed = false;
             for (int dx : offsets) {
@@ -352,6 +370,7 @@ public class TetrisGame {
             }
             if (!placed) currentPiece.rotateCounterClockwise();
         }
+        
 
         private void hardDrop() {
             int dropped = 0;
