@@ -23,7 +23,7 @@ public class TetrisGame {
 
     static final int BOARD_COLS   = 10;
     static final int BOARD_ROWS   = 20;
-    static final int CELL_SIZE    = 32;
+    static final int CELL_SIZE    = 24;
     static final int BOARD_WIDTH  = BOARD_COLS * CELL_SIZE;
     static final int BOARD_HEIGHT = BOARD_ROWS * CELL_SIZE;
     static final int SIDE_PANEL   = 180;
