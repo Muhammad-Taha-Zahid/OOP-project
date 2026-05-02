@@ -291,7 +291,7 @@ public class TetrisGame {
             return Math.max(80, BASE_DROP_MS - (level - 1) * 70);
         }
 
-        private void spawnPiece() {
+        /*private void spawnPiece() {
             currentPiece = nextPiece;
             nextPiece    = TetrominoFactory.createRandom();
             pieceX       = BOARD_COLS / 2 - 2;
@@ -301,6 +301,29 @@ public class TetrisGame {
                 // Stack topped out — end the game regardless of mode
                 endGame();
             }
+        }*/
+        
+        private void spawnPiece() {
+        currentPiece = nextPiece;
+        nextPiece    = TetrominoFactory.createRandom();
+        pieceX       = BOARD_COLS / 2 - 2;
+        pieceY       = 0;
+
+            if (!isValidPosition(currentPiece.getShape(), pieceX, pieceY)) {
+                if (mode.shouldClearOnTopOut()) {   // ask the mode what to do
+                clearBoard();                   // zen: wipe and continue
+            } else {
+                endGame();                      // all other modes: end normally
+                }
+            }
+        }
+        
+        private void clearBoard() {
+            for (Color[] row : board) {
+            java.util.Arrays.fill(row, null);  // null = empty cell
+            }
+        // piece and state are already set by spawnPiece() above,
+        // so play continues immediately with no further changes needed
         }
 
         private void endGame() {

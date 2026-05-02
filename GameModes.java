@@ -1,3 +1,4 @@
+package com.mycompany.tetrisgame;
 /**
  * GameModes.java — Defines all game modes and difficulties for Tetris.
  *
@@ -8,12 +9,7 @@
  * GameMode interface exclusively.
  */
 public class GameModes {
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Difficulty — sets starting level (which controls drop speed)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public enum Difficulty {
+    public enum Difficulty { //changes drop speed
         SLOW   ("Slow",   1),
         MEDIUM ("Medium", 5),
         FAST   ("Fast",  10);
@@ -46,6 +42,7 @@ public class GameModes {
         protected long   startTimeMs = 0;
         protected int    level      = 1;
         protected boolean started   = false;
+        public boolean shouldClearOnTopOut() { return false; } //for zen mode
 
         /** Human-readable name shown in the UI. */
         public abstract String getModeName();
@@ -234,6 +231,9 @@ public class GameModes {
      * No high score is recorded.
      */
     public static class ZenMode extends GameMode {
+        
+        @Override
+        public boolean shouldClearOnTopOut() { return true; }
 
         @Override
         public String getModeName() { return "Zen"; }
