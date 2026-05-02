@@ -23,7 +23,7 @@ public class TetrisGame {
 
     static final int BOARD_COLS   = 10;
     static final int BOARD_ROWS   = 20;
-    static final int CELL_SIZE    = 24;
+    static final int CELL_SIZE    = 32;
     static final int BOARD_WIDTH  = BOARD_COLS * CELL_SIZE;
     static final int BOARD_HEIGHT = BOARD_ROWS * CELL_SIZE;
     static final int SIDE_PANEL   = 180;
@@ -42,31 +42,32 @@ public class TetrisGame {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // HighScoreManager — CSV-backed, one score per mode
+    // HighScoreManager — CSV-backed, one score per difficulty
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Stores and retrieves high scores from "highscores.csv".
-     * Format: one line per difficulty — DIFFICULTY_NAME,SCORE
+     * Format: one line per mode — MODE_NAME,SCORE
      * Example:
-     *   Slow,14200
-     *   Medium,30500
-     *   Fast,8100
+     *   Standard,14200
+     *   40 Lines,30500
+     *   Time Trial,8100
+     * Zen mode is excluded (recordsHighScore() returns false).
      */
     public static class HighScoreManager {
 
         private static final String FILE_NAME = "highscores.csv";
 
         /**
-         * Returns the stored high score for the given difficulty, or 0 if none.
+         * Returns the stored high score for the given mode, or 0 if none.
          */
-        public static int getHighScore(GameModes.Difficulty diff) {
+        public static int getHighScore(GameModes.GameMode mode) {
             try {
                 File f = new File(FILE_NAME);
                 if (!f.exists()) return 0;
                 for (String line : Files.readAllLines(f.toPath())) {
-                    String[] parts = line.split(",");
-                    if (parts.length == 2 && parts[0].trim().equalsIgnoreCase(diff.getDisplayName())) {
+                    String[] parts = line.split(",", 2);
+                    if (parts.length == 2 && parts[0].trim().equalsIgnoreCase(mode.getModeName())) {
                         return Integer.parseInt(parts[1].trim());
                     }
                 }
@@ -75,22 +76,22 @@ public class TetrisGame {
         }
 
         /**
-         * Saves the score for the given difficulty if it is a new high score.
+         * Saves the score for the given mode if it is a new high score.
          * Rewrites the entire CSV preserving all other entries.
+         * Only call this when mode.recordsHighScore() is true.
          */
-        public static void saveIfHighScore(GameModes.Difficulty diff, int score) {
-            if (score <= getHighScore(diff)) return;
+        public static void saveIfHighScore(GameModes.GameMode mode, int score) {
+            if (score <= getHighScore(mode)) return;
 
-            // Build updated lines
             List<String> lines = new ArrayList<>();
             boolean found = false;
             try {
                 File f = new File(FILE_NAME);
                 if (f.exists()) {
                     for (String line : Files.readAllLines(f.toPath())) {
-                        String[] parts = line.split(",");
-                        if (parts.length == 2 && parts[0].trim().equalsIgnoreCase(diff.getDisplayName())) {
-                            lines.add(diff.getDisplayName() + "," + score);
+                        String[] parts = line.split(",", 2);
+                        if (parts.length == 2 && parts[0].trim().equalsIgnoreCase(mode.getModeName())) {
+                            lines.add(mode.getModeName() + "," + score);
                             found = true;
                         } else {
                             lines.add(line);
@@ -99,7 +100,7 @@ public class TetrisGame {
                 }
             } catch (Exception ignored) {}
 
-            if (!found) lines.add(diff.getDisplayName() + "," + score);
+            if (!found) lines.add(mode.getModeName() + "," + score);
 
             try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_NAME))) {
                 for (String line : lines) pw.println(line);
@@ -268,7 +269,16 @@ public class TetrisGame {
             });
             dropTimer.start();
 
-            renderTimer = new Timer(16, e -> repaint()); // ~60 fps
+            renderTimer = new Timer(16, e -> {         // ~60 fps
+                if (flashFrames > 0) {
+                    flashFrames--;
+                    if (flashFrames == 0) {
+                        removeFlashRows();
+                        flashRows.clear();
+                    }
+                }
+                repaint();
+            });
             renderTimer.start();
 
             requestFocusInWindow();
@@ -300,8 +310,8 @@ public class TetrisGame {
 
             // Save high score if this mode supports it
             if (mode.recordsHighScore()) {
-                HighScoreManager.saveIfHighScore(difficulty, score);
-                if (score >= HighScoreManager.getHighScore(difficulty)) {
+                HighScoreManager.saveIfHighScore(mode, score);
+                if (score >= HighScoreManager.getHighScore(mode)) {
                     SoundEffects.onHighScore();
                 }
             }
@@ -370,14 +380,7 @@ public class TetrisGame {
                 return;
             }
 
-            if (flashFrames > 0) {
-                flashFrames--;
-                if (flashFrames == 0) {
-                    removeFlashRows();
-                    flashRows.clear();
-                }
-                return;
-            }
+            if (flashFrames > 0) return; // waiting for flash to finish
 
             if (isValidPosition(currentPiece.getShape(), pieceX, pieceY + 1)) {
                 pieceY++;
@@ -414,7 +417,7 @@ public class TetrisGame {
                 if (full) flashRows.add(r);
             }
             if (!flashRows.isEmpty()) {
-                flashFrames = 8;
+                flashFrames = 12;  // ~200 ms at 60 fps
                 int cleared = flashRows.size();
                 addScore(cleared);
                 lines += cleared;

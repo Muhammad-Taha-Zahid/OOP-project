@@ -217,13 +217,20 @@ public class UserInterface {
 
     /**
      * Plain high score display.
-     * Shows one high score per difficulty (Slow / Medium / Fast), read from
-     * TetrisGame.HighScoreManager.
+     * Shows one high score per scoring mode (Standard, 40 Lines, Time Trial).
+     * Zen mode is excluded as it does not record scores.
      * "Back" returns to the main menu.
      */
     public static class HighScoreScreen extends JPanel {
 
         private final TetrisGame.TetrisFrame frame;
+
+        // All modes that record a high score
+        private static final GameModes.GameMode[] SCORED_MODES = {
+            new GameModes.StandardMode(),
+            new GameModes.FourtyLines(),
+            new GameModes.TimeTrial()
+        };
 
         public HighScoreScreen(TetrisGame.TetrisFrame frame) {
             this.frame = frame;
@@ -242,9 +249,9 @@ public class UserInterface {
             heading.setFont(new Font(Font.DIALOG, Font.BOLD, 22));
             inner.add(heading);
 
-            for (GameModes.Difficulty diff : GameModes.Difficulty.values()) {
-                int hs = TetrisGame.HighScoreManager.getHighScore(diff);
-                String text = diff.getDisplayName() + ":  " + (hs > 0 ? hs : "--");
+            for (GameModes.GameMode mode : SCORED_MODES) {
+                int hs = TetrisGame.HighScoreManager.getHighScore(mode);
+                String text = mode.getModeName() + ":  " + (hs > 0 ? hs : "--");
                 JLabel lbl = new JLabel(text, SwingConstants.CENTER);
                 lbl.setFont(new Font(Font.DIALOG, Font.PLAIN, 16));
                 inner.add(lbl);
