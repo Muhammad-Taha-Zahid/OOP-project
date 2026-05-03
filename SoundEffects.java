@@ -27,7 +27,7 @@ public class SoundEffects {
      * Should loop continuously until stopBackgroundMusic() is called.
      */
     public static void startBackgroundMusic() {
-        // TODO: load and loop a background music track
+        SoundManager.playMusic("OOP-project/Sounds/tetrismusic.wav");
     }
 
     /**
@@ -35,7 +35,7 @@ public class SoundEffects {
      * Called when the game ends, is paused, or the player returns to a menu.
      */
     public static void stopBackgroundMusic() {
-        // TODO: stop the background music track
+        SoundManager.stopMusic();
     }
 
     /**
@@ -43,7 +43,11 @@ public class SoundEffects {
      * @param paused true to pause, false to resume
      */
     public static void setBackgroundMusicPaused(boolean paused) {
-        // TODO: pause or resume the background music
+        if (paused) {
+            SoundManager.pauseMusic();
+        } else {
+            SoundManager.resumeMusic();
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -54,7 +58,7 @@ public class SoundEffects {
      * Played when a piece is soft-dropped (player holds the down key).
      */
     public static void onSoftDrop() {
-        // TODO: play a short soft-drop tick sound
+        SoundManager.playSound("Sounds/soundsdrop.wav");
     }
 
     /**
@@ -62,28 +66,28 @@ public class SoundEffects {
      * Typically a louder, sharper impact sound than a soft drop.
      */
     public static void onHardDrop() {
-        // TODO: play a hard-drop impact sound
+        SoundManager.playComboSound("OOP-project/Sounds/soundsdrop.wav", 4);
     }
 
     /**
      * Played when a piece naturally locks into position (touches the stack).
      */
     public static void onPieceLock() {
-        // TODO: play a piece-lock sound
+        SoundManager.playSound("Sounds/soundspiecelock.wav");
     }
 
     /**
      * Played when a piece is rotated.
      */
     public static void onRotate() {
-        // TODO: play a rotate swoosh/click sound
+        SoundManager.playSound("Sounds/soundsrotate.wav");
     }
 
     /**
      * Played when a piece is moved left or right.
      */
     public static void onMove() {
-        // TODO: play a lateral-move tick sound
+        SoundManager.playSound("Sounds/soundslateralmove.wav");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -95,7 +99,7 @@ public class SoundEffects {
      * @param lineCount the number of lines cleared (1, 2, or 3)
      */
     public static void onLineClear(int lineCount) {
-        // TODO: play a line-clear sound scaled to lineCount
+        SoundManager.playComboSound("OOP-project/Sounds/soundsclear.wav", lineCount);
     }
 
     /**
@@ -103,7 +107,7 @@ public class SoundEffects {
      * Should be distinct and more dramatic than onLineClear().
      */
     public static void onTetris() {
-        // TODO: play a special Tetris four-line-clear fanfare
+        SoundManager.playComboSound("OOP-project/Sounds/soundstetris.wav", 4);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -114,7 +118,7 @@ public class SoundEffects {
      * Played when the player advances to a new level.
      */
     public static void onLevelUp() {
-        // TODO: play a level-up jingle or sound
+        SoundManager.playSound("Sounds/soundslevelup.wav");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -125,14 +129,14 @@ public class SoundEffects {
      * Played when any menu button is clicked.
      */
     public static void onMenuClick() {
-        // TODO: play a UI button click sound
+        SoundManager.playSound("Sounds/soundsselect.wav");
     }
 
     /**
      * Played when the player navigates back from a screen.
      */
     public static void onMenuBack() {
-        // TODO: play a back-navigation sound (may be same as onMenuClick)
+        SoundManager.playSound("Sounds/soundsselect.wav");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -143,13 +147,13 @@ public class SoundEffects {
      * Played when the game ends (stack reaches the top).
      */
     public static void onGameOver() {
-        // TODO: play a game-over sound or jingle
+        SoundManager.playSound("Sounds/soundsgameover.wav");
     }
 
     /**
      * Played when the player achieves or beats a high score.
      */
     public static void onHighScore() {
-        // TODO: play a high-score celebration sound
+        SoundManager.playSound("Sounds/soundshighscore.wav");
     }
 }
