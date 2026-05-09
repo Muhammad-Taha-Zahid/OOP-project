@@ -8,17 +8,6 @@ import java.util.ArrayList; //.util tracks line clear animations
 import java.util.List;
 import javax.swing.*;       //platform independant GUI elements, buttons etc.
 
-/**
- * TetrisGame — Main class containing:
- *  - TetrisFrame     : window/screen manager (delegates UI to UserInterface.java)
- *  - GameBoard       : core game logic + rendering
- *  - HighScoreManager: reads/writes one high score per difficulty to CSV
- *  - main()          : entry point
- *
- * UI screens live in UserInterface.java.
- * Game modes and difficulties live in GameModes.java.
- * Sound effect stubs live in SoundEffects.java.
- */
 public class TetrisGame {
     //layout constants
     static final int BOARD_COLS   = 10;

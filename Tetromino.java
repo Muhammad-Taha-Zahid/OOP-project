@@ -51,23 +51,7 @@ public abstract class Tetromino {
         return rotationState;
     }
 
-    /**
-     * Returns a deep copy of the shape for preview or ghost rendering.
-     DEAD CODE FOR LATER IMPLEMENTATION
-    public int[][] getShapeCopy() {
-        int[][] copy = new int[shape.length][];
-        for (int i = 0; i < shape.length; i++) {
-            copy[i] = shape[i].clone();
-        }
-        return copy;
-    }
-    */
     public int[][] getPreviewShape() { //previews next piece
         return rotations[0];
-    }
-
-    @Override
-    public String toString() {
-        return "Tetromino[" + getType() + ", rotation=" + rotationState + "]";
     }
 }
