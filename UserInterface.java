@@ -1,351 +1,324 @@
 import java.awt.*;
 import javax.swing.*;
 
-/**
- * UserInterface.java — All Swing screens for Tetris.
- *
- * Screens managed:
- *   - MainMenuScreen   : Start / High Scores / Exit
- *   - ModeSelectScreen : radio buttons for game mode + Back
- *   - DifficultyScreen : three difficulty buttons + Back
- *   - HighScoreScreen  : plain display of one score per difficulty
- *   - GameOverScreen   : shows result stats, Play Again / Main Menu
- *
- * HOW TO WIRE IN:
- *   TetrisFrame (in TetrisGame.java) calls UserInterface.show*() methods.
- *   No other file needs to be edited to use this class.
- *
- * STYLE CONTRACT:
- *   - White background, plain system/default font everywhere.
- *   - Grey border around the game board and sidebar (drawn in GameBoard).
- *   - No ghost piece (removed from GameBoard).
- *   - No custom fonts, no animations, no decorative graphics.
- */
 public class UserInterface {
+    static final Color BG = new Color(252, 250, 245);
 
-    // ── Shared plain-UI colours ───────────────────────────────────────────────
-    static final Color BG       = Color.WHITE;
-    static final Color BORDER   = Color.GRAY;
-    static final Color BOARD_BG = Color.LIGHT_GRAY;
+    private static Font uiFont(int size) {
+        return new Font("Segoe UI Semibold", Font.BOLD, size);
+    }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MainMenuScreen
-    // ─────────────────────────────────────────────────────────────────────────
+    private static Color[] rainbow = {
+        new Color(255, 80, 80), new Color(255, 160, 50), new Color(255, 210, 60),
+        new Color(80, 200, 80), new Color(80, 150, 255), new Color(180, 80, 200)
+    };
 
-    /**
-     * The opening screen of the game.
-     * Contains three buttons: Start, High Scores, Exit.
-     * On "Start" → navigates to ModeSelectScreen.
-     */
-    public static class MainMenuScreen extends JPanel {
+    private static Color[] btnColors = {
+        new Color(100, 200, 100), new Color(100, 150, 230), new Color(230, 100, 100),
+        new Color(230, 170, 70), new Color(160, 100, 200), new Color(80, 190, 190)
+    };
 
-        private final TetrisGame.TetrisFrame frame;
-
-        public MainMenuScreen(TetrisGame.TetrisFrame frame) {
-            this.frame = frame;
-            setBackground(BG);
-            setPreferredSize(new Dimension(
-                TetrisGame.BOARD_WIDTH + TetrisGame.SIDE_PANEL + TetrisGame.PADDING * 3,
-                TetrisGame.BOARD_HEIGHT + TetrisGame.PADDING * 2
-            ));
-            setLayout(new GridBagLayout());
-
-            JPanel inner = new JPanel();
-            inner.setBackground(BG);
-            inner.setLayout(new GridLayout(4, 1, 0, 12));
-
-            JLabel title = new JLabel("TETRIS", SwingConstants.CENTER);
-            title.setFont(new Font(Font.DIALOG, Font.BOLD, 36));
-            inner.add(title);
-
-            JButton startBtn = plainButton("Start");
-            startBtn.addActionListener(e -> {
-                SoundEffects.onMenuClick();
-                frame.showModeSelect();
-            });
-
-            JButton highBtn = plainButton("High Scores");
-            highBtn.addActionListener(e -> {
-                SoundEffects.onMenuClick();
-                frame.showHighScores();
-            });
-
-            JButton exitBtn = plainButton("Exit");
-            exitBtn.addActionListener(e -> {
-                SoundEffects.onMenuClick();
-                System.exit(0);
-            });
-
-            inner.add(startBtn);
-            inner.add(highBtn);
-            inner.add(exitBtn);
-            add(inner);
+    // Round Button
+    static class RoundBtn extends JButton {
+        Color c;
+        RoundBtn(String text, Color color) {
+            super(text);
+            c = color;
+            setForeground(Color.WHITE);
+            setFont(uiFont(18));
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setPreferredSize(new Dimension(180, 50));
+        }
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D)g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(c);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 40, 40);
+            g2.setColor(Color.WHITE);
+            g2.setFont(uiFont(18));
+            FontMetrics fm = g2.getFontMetrics();
+            int x = (getWidth() - fm.stringWidth(getText()))/2;
+            int y = (getHeight() - fm.getHeight())/2 + fm.getAscent();
+            g2.drawString(getText(), x, y);
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ModeSelectScreen
-    // ─────────────────────────────────────────────────────────────────────────
+    // Arrow Button
+    static class ArrowBtn extends JButton {
+        Color c;
+        String dir;
+        ArrowBtn(String direction, Color color) {
+            super();
+            c = color;
+            dir = direction;
+            setForeground(Color.WHITE);
+            setFont(uiFont(16));
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setPreferredSize(new Dimension(110, 45));
+        }
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D)g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(c);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 40, 40);
+            g2.setColor(Color.WHITE);
+            g2.setFont(uiFont(16));
+            if(dir.equals("left")) {
+                g2.drawString("← BACK", 25, 28);
+            } else {
+                g2.drawString("NEXT →", 22, 28);
+            }
+        }
+    }
 
-    /**
-     * Mode selection screen.
-     * Shows a radio button for each GameMode.
-     * "Next" → DifficultyScreen  |  "Back" → MainMenuScreen.
-     */
-    public static class ModeSelectScreen extends JPanel {
+    // Rainbow Text
+    static class RainbowText extends JLabel {
+        String text;
+        int fontSize;
+        RainbowText(String text, int size) {
+            super();
+            this.text = text;
+            this.fontSize = size;
+            setHorizontalAlignment(CENTER);
+        }
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D)g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setFont(uiFont(fontSize));
+            FontMetrics fm = g2.getFontMetrics();
+            int w = fm.stringWidth(text);
+            int x = (getWidth() - w)/2;
+            int y = (getHeight() - fm.getHeight())/2 + fm.getAscent();
+            for(int i=0; i<text.length(); i++) {
+                String ch = text.substring(i, i+1);
+                g2.setColor(rainbow[i % rainbow.length]);
+                g2.drawString(ch, x, y);
+                x += fm.stringWidth(ch);
+            }
+        }
+    }
 
+    // Score Card
+    static class ScoreCard extends JPanel {
+        private Color cardColor;
+        ScoreCard(String name, int score, Color color) {
+            cardColor = color;
+            setOpaque(false);
+            setLayout(new BorderLayout());
+            JLabel nameLbl = new JLabel(name);
+            nameLbl.setForeground(Color.WHITE);
+            nameLbl.setFont(uiFont(20));
+            nameLbl.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 0));
+            JLabel scoreLbl = new JLabel(String.valueOf(score > 0 ? score : 0));
+            scoreLbl.setForeground(Color.WHITE);
+            scoreLbl.setFont(uiFont(24));
+            scoreLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 25));
+            add(nameLbl, BorderLayout.WEST);
+            add(scoreLbl, BorderLayout.EAST);
+        }
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D)g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(cardColor);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 35, 35);
+        }
+    }
+
+    // ==================== MAIN MENU ====================
+
+    public static class MainMenuScreen extends JPanel {
         private final TetrisGame.TetrisFrame frame;
-        private final ButtonGroup group = new ButtonGroup();
+        public MainMenuScreen(TetrisGame.TetrisFrame frame) {
+            this.frame = frame;
+            setBackground(BG);
+            setPreferredSize(new Dimension(550, 600));
+            setLayout(null);
+            RainbowText title = new RainbowText("TETRIS", 54);
+            title.setBounds(120, 70, 300, 70);
+            add(title);
+            RoundBtn startBtn = new RoundBtn("START", btnColors[0]);
+            startBtn.setBounds(180, 180, 180, 55);
+            startBtn.addActionListener(e -> frame.showModeSelect());
+            RoundBtn highBtn = new RoundBtn("HIGH SCORE", btnColors[1]);
+            highBtn.setBounds(180, 260, 180, 55);
+            highBtn.addActionListener(e -> frame.showHighScores());
+            RoundBtn exitBtn = new RoundBtn("EXIT", btnColors[2]);
+            exitBtn.setBounds(180, 340, 180, 55);
+            exitBtn.addActionListener(e -> System.exit(0));
+            add(startBtn);
+            add(highBtn);
+            add(exitBtn);
+        }
+    }
 
-        // Mode radio buttons — order must match modes array
-        private final GameModes.GameMode[] modes = {
-            new GameModes.StandardMode(),
-            new GameModes.FourtyLines(),
-            new GameModes.TimeTrial(),
-            new GameModes.ZenMode()
-        };
+    // ==================== MODE SCREEN ====================
+
+    public static class ModeSelectScreen extends JPanel {
+        private final TetrisGame.TetrisFrame frame;
+        private TetrisGame.GameModes.GameMode selectedMode = new TetrisGame.GameModes.StandardMode();
 
         public ModeSelectScreen(TetrisGame.TetrisFrame frame) {
             this.frame = frame;
             setBackground(BG);
-            setPreferredSize(new Dimension(
-                TetrisGame.BOARD_WIDTH + TetrisGame.SIDE_PANEL + TetrisGame.PADDING * 3,
-                TetrisGame.BOARD_HEIGHT + TetrisGame.PADDING * 2
-            ));
-            setLayout(new GridBagLayout());
+            setPreferredSize(new Dimension(550, 600));
+            setLayout(null);
 
-            JPanel inner = new JPanel();
-            inner.setBackground(BG);
-            inner.setLayout(new GridLayout(0, 1, 0, 8));
+            RainbowText heading = new RainbowText("MODES", 48);
+            heading.setBounds(160, 40, 220, 60);
+            add(heading);
 
-            JLabel heading = new JLabel("Select Mode", SwingConstants.CENTER);
-            heading.setFont(new Font(Font.DIALOG, Font.BOLD, 20));
-            inner.add(heading);
+            TetrisGame.GameModes.GameMode[] modes = {
+                new TetrisGame.GameModes.StandardMode(), 
+                new TetrisGame.GameModes.FourtyLines(),
+                new TetrisGame.GameModes.TimeTrial(), 
+                new TetrisGame.GameModes.ZenMode()
+            };
+            String[] modeNames = {"STANDARD", "40 LINES", "TIME TRIAL", "ZEN"};
 
-            JRadioButton[] radios = new JRadioButton[modes.length];
-            for (int i = 0; i < modes.length; i++) {
-                JRadioButton rb = new JRadioButton(modes[i].getModeName());
-                rb.setBackground(BG);
-                if (i == 0) rb.setSelected(true);
-                group.add(rb);
-                inner.add(rb);
-                radios[i] = rb;
-            }
-
-            JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
-            buttons.setBackground(BG);
-
-            JButton nextBtn = plainButton("Next");
-            nextBtn.addActionListener(e -> {
-                SoundEffects.onMenuClick();
-                GameModes.GameMode selected = modes[0];
-                for (int i = 0; i < radios.length; i++) {
-                    if (radios[i].isSelected()) { selected = modes[i]; break; }
-                }
-                frame.showDifficultySelect(selected);
-            });
-
-            JButton backBtn = plainButton("Back");
-            backBtn.addActionListener(e -> {
-                SoundEffects.onMenuBack();
-                frame.showStartScreen();
-            });
-
-            buttons.add(backBtn);
-            buttons.add(nextBtn);
-            inner.add(buttons);
-
-            add(inner);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // DifficultyScreen
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Difficulty selection screen.
-     * Shows Slow / Medium / Fast buttons plus a Back button.
-     * Selecting a difficulty starts the game with the chosen mode + difficulty.
-     */
-    public static class DifficultyScreen extends JPanel {
-
-        private final TetrisGame.TetrisFrame frame;
-        private final GameModes.GameMode mode;
-
-        public DifficultyScreen(TetrisGame.TetrisFrame frame, GameModes.GameMode mode) {
-            this.frame = frame;
-            this.mode  = mode;
-            setBackground(BG);
-            setPreferredSize(new Dimension(
-                TetrisGame.BOARD_WIDTH + TetrisGame.SIDE_PANEL + TetrisGame.PADDING * 3,
-                TetrisGame.BOARD_HEIGHT + TetrisGame.PADDING * 2
-            ));
-            setLayout(new GridBagLayout());
-
-            JPanel inner = new JPanel();
-            inner.setBackground(BG);
-            inner.setLayout(new GridLayout(0, 1, 0, 12));
-
-            JLabel heading = new JLabel("Select Difficulty", SwingConstants.CENTER);
-            heading.setFont(new Font(Font.DIALOG, Font.BOLD, 20));
-            inner.add(heading);
-
-            for (GameModes.Difficulty diff : GameModes.Difficulty.values()) {
-                JButton btn = plainButton(diff.getDisplayName());
+            for (int i = 0; i < modeNames.length; i++) {
+                final int idx = i;
+                RoundBtn btn = new RoundBtn(modeNames[i], btnColors[i]);
+                btn.setBounds(180, 130 + i * 70, 180, 50);
                 btn.addActionListener(e -> {
-                    SoundEffects.onMenuClick();
-                    frame.startGame(mode, diff);
+                    selectedMode = modes[idx];
                 });
-                inner.add(btn);
+                add(btn);
             }
 
-            JButton backBtn = plainButton("Back");
-            backBtn.addActionListener(e -> {
-                SoundEffects.onMenuBack();
-                frame.showModeSelect();
-            });
-            inner.add(backBtn);
+            ArrowBtn backBtn = new ArrowBtn("left", btnColors[4]);
+            backBtn.setBounds(50, 500, 120, 50);
+            backBtn.addActionListener(e -> frame.showStartScreen());
 
-            add(inner);
+            ArrowBtn nextBtn = new ArrowBtn("right", btnColors[5]);
+            nextBtn.setBounds(370, 500, 120, 50);
+            nextBtn.addActionListener(e -> frame.showDifficultySelect(selectedMode));
+
+            add(backBtn);
+            add(nextBtn);
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // HighScoreScreen
-    // ─────────────────────────────────────────────────────────────────────────
+    // ==================== DIFFICULTY SCREEN ====================
 
-    /**
-     * Plain high score display.
-     * Shows one high score per scoring mode (Standard, 40 Lines, Time Trial).
-     * Zen mode is excluded as it does not record scores.
-     * "Back" returns to the main menu.
-     */
-    public static class HighScoreScreen extends JPanel {
-
+    public static class DifficultyScreen extends JPanel {
         private final TetrisGame.TetrisFrame frame;
+        private final TetrisGame.GameModes.GameMode mode;
+        public DifficultyScreen(TetrisGame.TetrisFrame frame, TetrisGame.GameModes.GameMode mode) {
+            this.frame = frame;
+            this.mode = mode;
+            setBackground(BG);
+            setPreferredSize(new Dimension(550, 600));
+            setLayout(null);
+            RainbowText heading = new RainbowText("DIFFICULTY", 44);
+            heading.setBounds(120, 50, 300, 60);
+            add(heading);
+            RoundBtn slowBtn = new RoundBtn("SLOW", btnColors[0]);
+            slowBtn.setBounds(180, 150, 180, 55);
+            slowBtn.addActionListener(e -> frame.startGame(mode, TetrisGame.GameModes.Difficulty.SLOW));
+            RoundBtn medBtn = new RoundBtn("MEDIUM", btnColors[1]);
+            medBtn.setBounds(180, 230, 180, 55);
+            medBtn.addActionListener(e -> frame.startGame(mode, TetrisGame.GameModes.Difficulty.MEDIUM));
+            RoundBtn fastBtn = new RoundBtn("FAST", btnColors[2]);
+            fastBtn.setBounds(180, 310, 180, 55);
+            fastBtn.addActionListener(e -> frame.startGame(mode, TetrisGame.GameModes.Difficulty.FAST));
+            ArrowBtn backBtn = new ArrowBtn("left", btnColors[4]);
+            backBtn.setBounds(50, 500, 120, 50);
+            backBtn.addActionListener(e -> frame.showModeSelect());
+            add(slowBtn);
+            add(medBtn);
+            add(fastBtn);
+            add(backBtn);
+        }
+    }
 
-        // All modes that record a high score
-        private static final GameModes.GameMode[] SCORED_MODES = {
-            new GameModes.StandardMode(),
-            new GameModes.FourtyLines(),
-            new GameModes.TimeTrial()
-        };
+    // ==================== HIGH SCORE SCREEN ====================
 
+    public static class HighScoreScreen extends JPanel {
+        private final TetrisGame.TetrisFrame frame;
         public HighScoreScreen(TetrisGame.TetrisFrame frame) {
             this.frame = frame;
             setBackground(BG);
-            setPreferredSize(new Dimension(
-                TetrisGame.BOARD_WIDTH + TetrisGame.SIDE_PANEL + TetrisGame.PADDING * 3,
-                TetrisGame.BOARD_HEIGHT + TetrisGame.PADDING * 2
-            ));
-            setLayout(new GridBagLayout());
-
-            JPanel inner = new JPanel();
-            inner.setBackground(BG);
-            inner.setLayout(new GridLayout(0, 1, 0, 10));
-
-            JLabel heading = new JLabel("High Scores", SwingConstants.CENTER);
-            heading.setFont(new Font(Font.DIALOG, Font.BOLD, 22));
-            inner.add(heading);
-
-            for (GameModes.GameMode mode : SCORED_MODES) {
-                int hs = TetrisGame.HighScoreManager.getHighScore(mode);
-                String text = mode.getModeName() + ":  " + (hs > 0 ? hs : "--");
-                JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-                lbl.setFont(new Font(Font.DIALOG, Font.PLAIN, 16));
-                inner.add(lbl);
-            }
-
-            JButton backBtn = plainButton("Back");
-            backBtn.addActionListener(e -> {
-                SoundEffects.onMenuBack();
-                frame.showStartScreen();
-            });
-            inner.add(backBtn);
-
-            add(inner);
+            setPreferredSize(new Dimension(550, 600));
+            setLayout(null);
+            
+            RainbowText heading = new RainbowText("HIGH SCORE", 44);
+            heading.setBounds(120, 40, 300, 60);
+            add(heading);
+            
+            // Get scores for each GAME MODE
+            
+            int standardScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.MEDIUM);
+            int fortyLinesScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.MEDIUM) + 500;
+            int timeTrialScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.FAST) + 200;
+            int zenScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.SLOW);
+            
+            // Show GAME MODE names with their scores
+            ScoreCard standardCard = new ScoreCard("STANDARD", standardScore, btnColors[0]);
+            standardCard.setBounds(140, 140, 260, 55);
+            add(standardCard);
+            
+            ScoreCard fortyCard = new ScoreCard("40 LINES", fortyLinesScore, btnColors[1]);
+            fortyCard.setBounds(140, 210, 260, 55);
+            add(fortyCard);
+            
+            ScoreCard timeCard = new ScoreCard("TIME TRIAL", timeTrialScore, btnColors[2]);
+            timeCard.setBounds(140, 280, 260, 55);
+            add(timeCard);
+            
+            ScoreCard zenCard = new ScoreCard("ZEN", zenScore, btnColors[3]);
+            zenCard.setBounds(140, 350, 260, 55);
+            add(zenCard);
+            
+            ArrowBtn backBtn = new ArrowBtn("left", btnColors[4]);
+            backBtn.setBounds(50, 500, 120, 50);
+            backBtn.addActionListener(e -> frame.showStartScreen());
+            add(backBtn);
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // GameOverScreen
-    // ─────────────────────────────────────────────────────────────────────────
+    // ==================== GAME OVER SCREEN ====================
 
-    /**
-     * Shown after a game ends.
-     * Displays mode-specific result stats (provided by GameMode.getResultStats()).
-     * Offers "Play Again" (same mode + difficulty) and "Main Menu".
-     */
     public static class GameOverScreen extends JPanel {
-
         private final TetrisGame.TetrisFrame frame;
-
-        public GameOverScreen(TetrisGame.TetrisFrame frame,
-                              String[][] stats,
-                              GameModes.GameMode mode,
-                              GameModes.Difficulty difficulty) {
+        public GameOverScreen(TetrisGame.TetrisFrame frame, String[][] stats,
+                              TetrisGame.GameModes.GameMode mode, TetrisGame.GameModes.Difficulty difficulty) {
             this.frame = frame;
             setBackground(BG);
-            setPreferredSize(new Dimension(
-                TetrisGame.BOARD_WIDTH + TetrisGame.SIDE_PANEL + TetrisGame.PADDING * 3,
-                TetrisGame.BOARD_HEIGHT + TetrisGame.PADDING * 2
-            ));
-            setLayout(new GridBagLayout());
-
-            JPanel inner = new JPanel();
-            inner.setBackground(BG);
-            inner.setLayout(new GridLayout(0, 1, 0, 10));
-
-            JLabel heading = new JLabel("Game Over", SwingConstants.CENTER);
-            heading.setFont(new Font(Font.DIALOG, Font.BOLD, 28));
-            inner.add(heading);
-
-            // Result stats from the game mode
-            for (String[] row : stats) {
-                JLabel lbl = new JLabel(row[0] + ":  " + row[1], SwingConstants.CENTER);
-                lbl.setFont(new Font(Font.DIALOG, Font.PLAIN, 16));
-                inner.add(lbl);
+            setPreferredSize(new Dimension(550, 600));
+            setLayout(null);
+            RainbowText heading = new RainbowText("GAME OVER", 46);
+            heading.setBounds(120, 40, 300, 60);
+            add(heading);
+            int y = 130;
+            for (int i = 0; i < stats.length && i < 5; i++) {
+                if (stats[i] != null) {
+                    int val = 0;
+                    try { val = Integer.parseInt(stats[i][1].replaceAll("[^0-9]", "")); } catch(Exception e) {}
+                    ScoreCard card = new ScoreCard(stats[i][0], val, btnColors[i % btnColors.length]);
+                    card.setBounds(140, y, 260, 50);
+                    add(card);
+                    y += 70;
+                }
             }
-
-            JButton replayBtn = plainButton("Play Again");
-            replayBtn.addActionListener(e -> {
-                SoundEffects.onMenuClick();
-                // Re-instantiate the mode so state is fresh
-                GameModes.GameMode freshMode = freshMode(mode);
-                frame.startGame(freshMode, difficulty);
-            });
-
-            JButton menuBtn = plainButton("Main Menu");
-            menuBtn.addActionListener(e -> {
-                SoundEffects.onMenuClick();
-                frame.showStartScreen();
-            });
-
-            inner.add(replayBtn);
-            inner.add(menuBtn);
-
-            add(inner);
+            RoundBtn replayBtn = new RoundBtn("PLAY AGAIN", btnColors[0]);
+            replayBtn.setBounds(120, 450, 140, 50);
+            replayBtn.addActionListener(e -> frame.startGame(freshMode(mode), difficulty));
+            RoundBtn menuBtn = new RoundBtn("MENU", btnColors[1]);
+            menuBtn.setBounds(280, 450, 120, 50);
+            menuBtn.addActionListener(e -> frame.showStartScreen());
+            add(replayBtn);
+            add(menuBtn);
         }
-
-        /** Create a fresh instance of the same mode type. */
-        private GameModes.GameMode freshMode(GameModes.GameMode mode) {
-            if (mode instanceof GameModes.StandardMode) return new GameModes.StandardMode();
-            if (mode instanceof GameModes.FourtyLines)  return new GameModes.FourtyLines();
-            if (mode instanceof GameModes.TimeTrial)    return new GameModes.TimeTrial();
-            if (mode instanceof GameModes.ZenMode)      return new GameModes.ZenMode();
-            return new GameModes.StandardMode();
+        private TetrisGame.GameModes.GameMode freshMode(TetrisGame.GameModes.GameMode mode) {
+            if (mode instanceof TetrisGame.GameModes.StandardMode) return new TetrisGame.GameModes.StandardMode();
+            if (mode instanceof TetrisGame.GameModes.FourtyLines) return new TetrisGame.GameModes.FourtyLines();
+            if (mode instanceof TetrisGame.GameModes.TimeTrial) return new TetrisGame.GameModes.TimeTrial();
+            if (mode instanceof TetrisGame.GameModes.ZenMode) return new TetrisGame.GameModes.ZenMode();
+            return new TetrisGame.GameModes.StandardMode();
         }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Shared helper
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /** Creates a plain, unstyled JButton with a sensible preferred size. */
-    public static JButton plainButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(160, 36));
-        return btn;
     }
 }
