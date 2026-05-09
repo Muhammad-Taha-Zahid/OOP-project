@@ -1,155 +1,73 @@
-/**
- * SoundEffects.java — Stub/dummy sound effect hooks for Tetris.
- *
- * HOW TO IMPLEMENT:
- *   All methods in this class are intentionally empty stubs.
- *   A programmer wishing to add real audio should:
- *     1. Add audio libraries (e.g. javax.sound.sampled, or a third-party lib).
- *     2. Load audio resources in the static initialiser or constructor.
- *     3. Replace each method body with the appropriate playback call.
- *   No other file needs to be modified — TetrisGame, GameBoard and
- *   UserInterface already call these methods at the correct moments.
- *
- * All methods are static for easy call-site ergonomics (SoundEffects.onDrop()).
- */
-public class SoundEffects {
+package com.mycompany.tetrisgame;
 
-    // ── Private constructor — static utility class, not instantiated ──────────
+public class SoundEffects {
     private SoundEffects() {}
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Background Music
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Start the background music loop.
-     * Called once when the gameplay screen is shown.
-     * Should loop continuously until stopBackgroundMusic() is called.
-     */
+    //background music
     public static void startBackgroundMusic() {
-        // TODO: load and loop a background music track
+        SoundManager.playMusic("OOP-project/Sounds/tetrismusic.wav");
     }
 
-    /**
-     * Stop the background music.
-     * Called when the game ends, is paused, or the player returns to a menu.
-     */
     public static void stopBackgroundMusic() {
-        // TODO: stop the background music track
+        SoundManager.stopMusic();
     }
 
-    /**
-     * Pause/resume the background music (e.g. on P key).
-     * @param paused true to pause, false to resume
-     */
+    //pause screen
     public static void setBackgroundMusicPaused(boolean paused) {
-        // TODO: pause or resume the background music
+        if (paused) {
+            SoundManager.pauseMusic();
+        } else {
+            SoundManager.resumeMusic();
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Piece Movement & Placement
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Played when a piece is soft-dropped (player holds the down key).
-     */
+    //movement
     public static void onSoftDrop() {
-        // TODO: play a short soft-drop tick sound
+        SoundManager.playSound("Sounds/soundsdrop.wav");
     }
 
-    /**
-     * Played when a piece is hard-dropped (player presses Space).
-     * Typically a louder, sharper impact sound than a soft drop.
-     */
     public static void onHardDrop() {
-        // TODO: play a hard-drop impact sound
+        SoundManager.playComboSound("OOP-project/Sounds/soundsdrop.wav", 4);
     }
 
-    /**
-     * Played when a piece naturally locks into position (touches the stack).
-     */
     public static void onPieceLock() {
-        // TODO: play a piece-lock sound
+        SoundManager.playSound("Sounds/soundspiecelock.wav");
     }
 
-    /**
-     * Played when a piece is rotated.
-     */
     public static void onRotate() {
-        // TODO: play a rotate swoosh/click sound
+        SoundManager.playSound("Sounds/soundsrotate.wav");
     }
 
-    /**
-     * Played when a piece is moved left or right.
-     */
     public static void onMove() {
-        // TODO: play a lateral-move tick sound
+        SoundManager.playSound("Sounds/soundslateralmove.wav");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Line Clears
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Played when one, two, or three lines are cleared at once.
-     * @param lineCount the number of lines cleared (1, 2, or 3)
-     */
-    public static void onLineClear(int lineCount) {
-        // TODO: play a line-clear sound scaled to lineCount
-    }
-
-    /**
-     * Played when exactly four lines are cleared simultaneously (Tetris!).
-     * Should be distinct and more dramatic than onLineClear().
-     */
-    public static void onTetris() {
-        // TODO: play a special Tetris four-line-clear fanfare
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Level & Score Milestones
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Played when the player advances to a new level.
-     */
-    public static void onLevelUp() {
-        // TODO: play a level-up jingle or sound
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Menu & UI Interactions
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Played when any menu button is clicked.
-     */
+    //UI interactions
     public static void onMenuClick() {
-        // TODO: play a UI button click sound
+        SoundManager.playSound("Sounds/soundsselect.wav");
     }
 
-    /**
-     * Played when the player navigates back from a screen.
-     */
     public static void onMenuBack() {
-        // TODO: play a back-navigation sound (may be same as onMenuClick)
+        SoundManager.playSound("Sounds/soundsselect.wav");
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Game State Events
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Played when the game ends (stack reaches the top).
-     */
+    
+    //game end and milestones
+    public static void onLevelUp() {
+        SoundManager.playSound("Sounds/soundslevelup.wav");
+    }
+    
+    public static void onLineClear(int lineCount) {
+        SoundManager.playComboSound("OOP-project/Sounds/soundsclear.wav", lineCount);
+    }
+    
+    public static void onTetris() {
+        SoundManager.playComboSound("OOP-project/Sounds/soundstetris.wav", 4);
+    }
     public static void onGameOver() {
-        // TODO: play a game-over sound or jingle
+        SoundManager.playSound("Sounds/soundsgameover.wav");
     }
 
-    /**
-     * Played when the player achieves or beats a high score.
-     */
     public static void onHighScore() {
-        // TODO: play a high-score celebration sound
+        SoundManager.playSound("Sounds/soundshighscore.wav");
     }
 }

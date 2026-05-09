@@ -20,9 +20,7 @@ import javax.swing.*;       //platform independant GUI elements, buttons etc.
  * Sound effect stubs live in SoundEffects.java.
  */
 public class TetrisGame {
-
-    // ─── Board / layout constants ─────────────────────────────────────────────
-
+    //layout constants
     static final int BOARD_COLS   = 10;
     static final int BOARD_ROWS   = 20;
     static final int CELL_SIZE    = 24;
@@ -31,11 +29,10 @@ public class TetrisGame {
     static final int SIDE_PANEL   = 180;
     static final int PADDING      = 16;
 
-    /** Drop interval in ms at level 1; speeds up each level. */
-    static final int BASE_DROP_MS = 800;
+    //starting drop speed
+    static final int BASE_DROP_MS = 800; //in mili-second
 
-    // ─── Entry Point ──────────────────────────────────────────────────────────
-
+    //start menu frame
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             TetrisFrame frame = new TetrisFrame();
@@ -43,26 +40,12 @@ public class TetrisGame {
         });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // HighScoreManager — CSV-backed, one score per difficulty
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Stores and retrieves high scores from "highscores.csv".
-     * Format: one line per mode — MODE_NAME,SCORE
-     * Example:
-     *   Standard,14200
-     *   40 Lines,30500
-     *   Time Trial,8100
-     * Zen mode is excluded (recordsHighScore() returns false).
-     */
+    //highscores, saves in a .csv file
     public static class HighScoreManager {
-
+        //defining filename
         private static final String FILE_NAME = "highscores.csv";
-
-        /**
-         * Returns the stored high score for the given mode, or 0 if none.
-         */
+        
+        //returns hs from file
         public static int getHighScore(GameModes.GameMode mode) {
             try {
                 File f = new File(FILE_NAME);
@@ -73,15 +56,11 @@ public class TetrisGame {
                         return Integer.parseInt(parts[1].trim());
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {} //gives no hs in zen
             return 0;
         }
 
-        /**
-         * Saves the score for the given mode if it is a new high score.
-         * Rewrites the entire CSV preserving all other entries.
-         * Only call this when mode.recordsHighScore() is true.
-         */
+        //new hs logic
         public static void saveIfHighScore(GameModes.GameMode mode, int score) {
             if (score <= getHighScore(mode)) return;
 
@@ -101,7 +80,7 @@ public class TetrisGame {
                     }
                 }
             } catch (Exception ignored) {}
-
+            //for modes not played yet
             if (!found) lines.add(mode.getModeName() + "," + score);
 
             try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_NAME))) {
@@ -110,10 +89,7 @@ public class TetrisGame {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // TetrisFrame — Window manager; delegates all UI to UserInterface.java
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //game window manager
     public static class TetrisFrame extends JFrame {
 
         TetrisFrame() {
@@ -123,30 +99,24 @@ public class TetrisGame {
             setBackground(UserInterface.BG);
         }
 
-        /** Shows the plain main menu (Start / High Scores / Exit). */
         public void showStartScreen() {
             switchTo(new UserInterface.MainMenuScreen(this));
         }
 
-        /** Shows the mode selection screen (called by main menu "Start"). */
         public void showModeSelect() {
             switchTo(new UserInterface.ModeSelectScreen(this));
         }
 
-        /** Shows the difficulty selection screen for the chosen mode. */
+        //from enums in GameModes.java
         public void showDifficultySelect(GameModes.GameMode mode) {
             switchTo(new UserInterface.DifficultyScreen(this, mode));
         }
 
-        /** Shows the plain high score screen. */
         public void showHighScores() {
             switchTo(new UserInterface.HighScoreScreen(this));
         }
 
-        /**
-         * Starts the game with the selected mode and difficulty.
-         * Called by DifficultyScreen when the player picks a difficulty.
-         */
+        //start game with specifications
         public void startGame(GameModes.GameMode mode, GameModes.Difficulty difficulty) {
             GameBoard board = new GameBoard(this, mode, difficulty);
             switchTo(board);
@@ -155,17 +125,14 @@ public class TetrisGame {
             SoundEffects.startBackgroundMusic();
         }
 
-        /**
-         * Shows the game-over / result screen.
-         * Called by GameBoard when isGameOver() is satisfied or the stack tops out.
-         */
+        //doesn't trigger on zenmode (ideally)
         public void showGameOver(String[][] stats, GameModes.GameMode mode, GameModes.Difficulty difficulty) {
             SoundEffects.stopBackgroundMusic();
             SoundEffects.onGameOver();
             switchTo(new UserInterface.GameOverScreen(this, stats, mode, difficulty));
         }
 
-        private void switchTo(JPanel panel) {
+        private void switchTo(JPanel panel) { //screen nav
             getContentPane().removeAll();
             setContentPane(panel);
             pack();
@@ -176,21 +143,18 @@ public class TetrisGame {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // GameBoard — Core game logic + rendering
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //gameplay logic and piece rendering
     static class GameBoard extends JPanel {
 
-        // ── Board state ──────────────────────────────────────────────────────
+        //actual gameboard
         private final Color[][] board = new Color[BOARD_ROWS][BOARD_COLS];
 
-        // ── Pieces ───────────────────────────────────────────────────────────
+        //tetrominos (made from TetrominoFactory.java
         private Tetromino currentPiece;
         private Tetromino nextPiece;
         private int pieceX, pieceY;
 
-        // ── Game state ───────────────────────────────────────────────────────
+        //stats on startup
         private int     score    = 0;
         private int     level    = 1;
         private int     lines    = 0;
@@ -198,21 +162,19 @@ public class TetrisGame {
         private boolean gameOver = false;
         private long    startTimeMs;
 
-        // ── Mode & difficulty ─────────────────────────────────────────────────
-        private final GameModes.GameMode   mode;
+        private final GameModes.GameMode   mode;    //mode & difficulty
         private final GameModes.Difficulty difficulty;
 
-        // ── Timers ───────────────────────────────────────────────────────────
-        private Timer dropTimer;
+        private Timer dropTimer;    //timers
         private Timer renderTimer;
 
-        // ── Line-clear flash ─────────────────────────────────────────────────
+        //line clear animation
         private final List<Integer> flashRows   = new ArrayList<>();
         private       int           flashFrames = 0;
 
         private final TetrisFrame frame;
 
-        // ── Colours (plain theme from UserInterface) ─────────────────────────
+        //colours
         private static final Color BOARD_BG    = UserInterface.BOARD_BG;
         private static final Color BORDER_COL  = UserInterface.BORDER;
         private static final Color GRID_COLOR  = new Color(180, 180, 180);
@@ -227,17 +189,15 @@ public class TetrisGame {
             setPreferredSize(new Dimension(w, h));
             setBackground(Color.WHITE);
             setFocusable(true);
-            setupKeyBindings();
+            setupKeyBindings(); //sets input
         }
 
-        // ─── Key Bindings ────────────────────────────────────────────────────
-
-        private void setupKeyBindings() {
+        private void setupKeyBindings() { //input
             addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyPressed(KeyEvent e) {
                     if (gameOver) return;
-                    switch (e.getKeyCode()) {
+                    switch (e.getKeyCode()) { //calls interaction functions
                         case KeyEvent.VK_LEFT  -> { SoundEffects.onMove();     moveLeft();     }
                         case KeyEvent.VK_RIGHT -> { SoundEffects.onMove();     moveRight();    }
                         case KeyEvent.VK_DOWN  -> { SoundEffects.onSoftDrop(); softDrop();     }
@@ -245,14 +205,13 @@ public class TetrisGame {
                         case KeyEvent.VK_SPACE -> { SoundEffects.onHardDrop(); hardDrop();     }
                         case KeyEvent.VK_C     -> { SoundEffects.onRotate();   rotatePieceCounter();  }
                         case KeyEvent.VK_P     -> togglePause();
-                        case KeyEvent.VK_ESCAPE -> frame.showStartScreen();
+                        case KeyEvent.VK_ESCAPE -> frame.showStartScreen(); //exit game
                     }
                 }
             });
         }
 
-        // ─── Game Lifecycle ──────────────────────────────────────────────────
-
+        //life-cycle
         void startGame() {
             for (Color[] row : board) java.util.Arrays.fill(row, null);
             level    = difficulty.getStartingLevel();
@@ -262,17 +221,17 @@ public class TetrisGame {
             gameOver = false;
 
             mode.onStart(level);
-            startTimeMs = System.currentTimeMillis();
+            startTimeMs = System.currentTimeMillis();//starts timer
 
-            nextPiece = TetrominoFactory.createRandom();
+            nextPiece = TetrominoFactory.createRandom();//calls bag randomiser (TetrominoFactory.java ln:41
             spawnPiece();
 
             dropTimer = new Timer(getDropInterval(), e -> {
                 if (!paused && !gameOver) step();
             });
             dropTimer.start();
-
-            renderTimer = new Timer(16, e -> {         // ~60 fps
+            //checks for and clears completed rows every frame
+            renderTimer = new Timer(16, e -> {         //60 fps, every 16ms
                 if (flashFrames > 0) {
                     flashFrames--;
                     if (flashFrames == 0) {
@@ -288,27 +247,15 @@ public class TetrisGame {
         }
 
         private int getDropInterval() {
-            return Math.max(80, BASE_DROP_MS - (level - 1) * 70);
+            return Math.max(80, BASE_DROP_MS - (level - 1) * 70); //ties drop speed to difficulty/level
         }
 
-        /*private void spawnPiece() {
-            currentPiece = nextPiece;
-            nextPiece    = TetrominoFactory.createRandom();
-            pieceX       = BOARD_COLS / 2 - 2;
-            pieceY       = 0;
-
-            if (!isValidPosition(currentPiece.getShape(), pieceX, pieceY)) {
-                // Stack topped out — end the game regardless of mode
-                endGame();
-            }
-        }*/
-        
         private void spawnPiece() {
         currentPiece = nextPiece;
         nextPiece    = TetrominoFactory.createRandom();
-        pieceX       = BOARD_COLS / 2 - 2;
+        pieceX       = BOARD_COLS / 2 - 2; //piece coord (middle top)
         pieceY       = 0;
-
+            //could be considered a gameover state but handled like a runtime exception, technically both
             if (!isValidPosition(currentPiece.getShape(), pieceX, pieceY)) {
                 if (mode.shouldClearOnTopOut()) {   // ask the mode what to do
                 clearBoard();                   // zen: wipe and continue
@@ -318,7 +265,7 @@ public class TetrisGame {
             }
         }
         
-        private void clearBoard() {
+        private void clearBoard() { //for zen-mode
             for (Color[] row : board) {
             java.util.Arrays.fill(row, null);  // null = empty cell
             }
@@ -334,7 +281,7 @@ public class TetrisGame {
 
             long elapsed = System.currentTimeMillis() - startTimeMs;
 
-            // Save high score if this mode supports it
+            //save high score if this mode supports it
             if (mode.recordsHighScore()) {
                 HighScoreManager.saveIfHighScore(mode, score);
                 if (score >= HighScoreManager.getHighScore(mode)) {
@@ -346,8 +293,7 @@ public class TetrisGame {
             SwingUtilities.invokeLater(() -> frame.showGameOver(stats, mode, difficulty));
         }
 
-        // ─── Movement ────────────────────────────────────────────────────────
-
+        //movement functions
         private void moveLeft() {
             if (isValidPosition(currentPiece.getShape(), pieceX - 1, pieceY))
                 pieceX--;
@@ -412,10 +358,9 @@ public class TetrisGame {
             else { dropTimer.setDelay(getDropInterval()); dropTimer.start(); }
         }
 
-        // ─── Game Step ───────────────────────────────────────────────────────
-
+        //game simulation ticks
         private void step() {
-            // Check mode-based game-over condition each tick
+            //check mode-based game-over condition each tick
             long elapsed = System.currentTimeMillis() - startTimeMs;
             if (mode.isGameOver(lines, elapsed)) {
                 endGame();
@@ -431,11 +376,11 @@ public class TetrisGame {
             }
         }
 
-        private void lockPiece() {
+        private void lockPiece() { 
             SoundEffects.onPieceLock();
             int[][] shape = currentPiece.getShape();
             Color   color = currentPiece.getColor();
-            for (int r = 0; r < 4; r++) {
+            for (int r = 0; r < 4; r++) { //r&c represent bounding boxes of the tetromino
                 for (int c = 0; c < 4; c++) {
                     if (shape[r][c] == 1) {
                         int boardRow = pieceY + r;
@@ -449,7 +394,7 @@ public class TetrisGame {
             if (flashRows.isEmpty()) spawnPiece();
         }
 
-        private void checkLines() {
+        private void checkLines() { //lineclear logic
             flashRows.clear();
             for (int r = 0; r < BOARD_ROWS; r++) {
                 boolean full = true;
@@ -459,18 +404,18 @@ public class TetrisGame {
                 if (full) flashRows.add(r);
             }
             if (!flashRows.isEmpty()) {
-                flashFrames = 12;  // ~200 ms at 60 fps
+                flashFrames = 12;  //200 ms at 60 fps (12x16.6)
                 int cleared = flashRows.size();
                 addScore(cleared);
                 lines += cleared;
 
-                // Level up only if mode doesn't fix the level
+                //lvl up logic
                 if (!mode.fixedLevel()) {
                     level = difficulty.getStartingLevel() + lines / 10;
                     dropTimer.setDelay(getDropInterval());
                 }
 
-                // Sound
+                //sound
                 if (cleared == 4) SoundEffects.onTetris();
                 else              SoundEffects.onLineClear(cleared);
             }
@@ -490,24 +435,24 @@ public class TetrisGame {
             spawnPiece();
         }
 
-        // ─── Collision Detection ─────────────────────────────────────────────
-
+        //collision logic
         private boolean isValidPosition(int[][] shape, int offX, int offY) {
             for (int r = 0; r < 4; r++) {
                 for (int c = 0; c < 4; c++) {
                     if (shape[r][c] == 1) {
-                        int bx = offX + c;
+                        int bx = offX + c; //absolute coords
                         int by = offY + r;
                         if (bx < 0 || bx >= BOARD_COLS || by >= BOARD_ROWS) return false;
+                        //piece would have to be outside gameboard to trigger
                         if (by >= 0 && board[by][bx] != null) return false;
+                        //checks for other pieces on those coords
                     }
                 }
             }
             return true;
         }
 
-        // ─── Rendering ───────────────────────────────────────────────────────
-
+        //rendering logic
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -516,24 +461,23 @@ public class TetrisGame {
             int boardOffX = PADDING;
             int boardOffY = PADDING;
 
-            drawBoard(g2, boardOffX, boardOffY);
-            // Ghost piece intentionally removed
-            drawCurrentPiece(g2, boardOffX, boardOffY);
-            drawFlash(g2, boardOffX, boardOffY);
-            drawBoardBorder(g2, boardOffX, boardOffY);
-            drawSidePanel(g2, boardOffX + BOARD_WIDTH + PADDING, boardOffY);
+            drawBoard(g2, boardOffX, boardOffY); //475
+            drawCurrentPiece(g2, boardOffX, boardOffY); //498
+            drawFlash(g2, boardOffX, boardOffY); //509
+            drawBoardBorder(g2, boardOffX, boardOffY); //517
+            drawSidePanel(g2, boardOffX + BOARD_WIDTH + PADDING, boardOffY); //531
 
-            if (paused) drawPauseOverlay(g2);
+            if (paused) drawPauseOverlay(g2); //638
 
             g2.dispose();
         }
 
         private void drawBoard(Graphics2D g2, int ox, int oy) {
-            // Grey board background
+            //grey board background
             g2.setColor(BOARD_BG);
             g2.fillRect(ox, oy, BOARD_WIDTH, BOARD_HEIGHT);
 
-            // Light grid lines
+            //grid lines
             g2.setColor(GRID_COLOR);
             g2.setStroke(new BasicStroke(0.5f));
             for (int c = 0; c <= BOARD_COLS; c++)
@@ -541,11 +485,11 @@ public class TetrisGame {
             for (int r = 0; r <= BOARD_ROWS; r++)
                 g2.drawLine(ox, oy + r * CELL_SIZE, ox + BOARD_WIDTH, oy + r * CELL_SIZE);
 
-            // Placed cells
+            //cell occupation
             for (int r = 0; r < BOARD_ROWS; r++) {
                 for (int c = 0; c < BOARD_COLS; c++) {
                     if (board[r][c] != null && !flashRows.contains(r)) {
-                        drawCell(g2, ox + c * CELL_SIZE, oy + r * CELL_SIZE, board[r][c]);
+                        drawCell(g2, ox + c * CELL_SIZE, oy + r * CELL_SIZE, board[r][c]); //523
                     }
                 }
             }
@@ -556,7 +500,7 @@ public class TetrisGame {
             int[][] shape = currentPiece.getShape();
             for (int r = 0; r < 4; r++)
                 for (int c = 0; c < 4; c++)
-                    if (shape[r][c] == 1)
+                    if (shape[r][c] == 1) //draws piece on all valid coords
                         drawCell(g2, ox + (pieceX + c) * CELL_SIZE,
                                      oy + (pieceY + r) * CELL_SIZE,
                                      currentPiece.getColor());
@@ -585,7 +529,6 @@ public class TetrisGame {
         }
 
         private void drawSidePanel(Graphics2D g2, int ox, int oy) {
-            // Grey sidebar background with grey border
             g2.setColor(BOARD_BG);
             g2.fillRect(ox, oy, SIDE_PANEL, BOARD_HEIGHT);
             g2.setColor(BORDER_COL);
@@ -594,22 +537,22 @@ public class TetrisGame {
 
             int cy = oy + 20;
 
-            // Mode name
+            //mode name
             g2.setColor(Color.DARK_GRAY);
             g2.setFont(new Font(Font.DIALOG, Font.BOLD, 11));
             String modeName = mode.getModeName().toUpperCase();
             g2.drawString(modeName, ox + 10, cy);
             cy += 20;
 
-            // Next piece
+            //next piece
             g2.setFont(new Font(Font.DIALOG, Font.BOLD, 11));
             g2.setColor(Color.DARK_GRAY);
             g2.drawString("NEXT", ox + 10, cy);
             cy += 5;
-            cy = drawNextPiece(g2, ox, cy);
+            cy = drawNextPiece(g2, ox, cy); //623
             cy += 10;
 
-            // Score (hidden for ZenMode)
+            //score
             if (mode.showScore()) {
                 g2.setFont(new Font(Font.DIALOG, Font.PLAIN, 11));
                 g2.setColor(Color.DARK_GRAY);
@@ -621,7 +564,7 @@ public class TetrisGame {
                 cy += 30;
             }
 
-            // Level (show unless Zen fixed-level)
+            //lvl
             g2.setFont(new Font(Font.DIALOG, Font.PLAIN, 11));
             g2.setColor(Color.DARK_GRAY);
             g2.drawString("LEVEL", ox + 10, cy);
@@ -630,7 +573,7 @@ public class TetrisGame {
             g2.drawString(String.valueOf(level), ox + 10, cy + 16);
             cy += 30;
 
-            // Lines
+            //lines cleared
             g2.setFont(new Font(Font.DIALOG, Font.PLAIN, 11));
             g2.setColor(Color.DARK_GRAY);
             g2.drawString("LINES", ox + 10, cy);
@@ -639,7 +582,7 @@ public class TetrisGame {
             g2.drawString(String.valueOf(lines), ox + 10, cy + 16);
             cy += 30;
 
-            // Time Trial: show countdown
+            //countdown
             if (mode instanceof GameModes.TimeTrial tt) {
                 long elapsed  = System.currentTimeMillis() - startTimeMs;
                 long remaining = tt.getRemainingMs(elapsed);
@@ -654,7 +597,7 @@ public class TetrisGame {
                 cy += 30;
             }
 
-            // 40-Lines: show target remaining
+            //lines remaining
             if (mode instanceof GameModes.FourtyLines) {
                 int remaining = Math.max(0, 40 - lines);
                 g2.setFont(new Font(Font.DIALOG, Font.PLAIN, 11));
@@ -666,11 +609,11 @@ public class TetrisGame {
                 cy += 30;
             }
 
-            // Controls hint
+            //controls hint
             cy = Math.max(cy, oy + BOARD_HEIGHT - 120);
             g2.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
             g2.setColor(Color.GRAY);
-            String[] hints = {"← → Move", "↑ Rotate", "↓ Soft drop", "SPC Hard drop", "P Pause", "ESC Menu"};
+            String[] hints = {"← → Move", "↑ Rotate","C Rotate Anti-Clockwise", "↓ Soft drop", "SPC Hard drop", "P Pause", "ESC Menu"};
             for (String h : hints) {
                 g2.drawString(h, ox + 8, cy);
                 cy += 14;
