@@ -186,15 +186,16 @@ public class TetrisGame {
                 @Override
                 public void keyPressed(KeyEvent e) {
                     if (gameOver) return;
+                    if (paused && e.getKeyCode() != KeyEvent.VK_P && e.getKeyCode() != KeyEvent.VK_ESCAPE) return;
                     switch (e.getKeyCode()) { //calls interaction functions
-                        case KeyEvent.VK_LEFT  -> { SoundEffects.onMove();     moveLeft();     }
-                        case KeyEvent.VK_RIGHT -> { SoundEffects.onMove();     moveRight();    }
-                        case KeyEvent.VK_DOWN  -> { SoundEffects.onSoftDrop(); softDrop();     }
-                        case KeyEvent.VK_UP    -> { SoundEffects.onRotate();   rotatePieceClock();  }
-                        case KeyEvent.VK_SPACE -> { SoundEffects.onHardDrop(); hardDrop();     }
-                        case KeyEvent.VK_C     -> { SoundEffects.onRotate();   rotatePieceCounter();  }
-                        case KeyEvent.VK_P     -> togglePause();
-                        case KeyEvent.VK_ESCAPE -> frame.showStartScreen(); //exit game
+                        case KeyEvent.VK_LEFT   -> { SoundEffects.onMove();     moveLeft();     }
+                        case KeyEvent.VK_RIGHT  -> { SoundEffects.onMove();     moveRight();    }
+                        case KeyEvent.VK_DOWN   -> { SoundEffects.onSoftDrop(); softDrop();     }
+                        case KeyEvent.VK_UP     -> { SoundEffects.onRotate();   rotatePieceClock();  }
+                        case KeyEvent.VK_SPACE  -> { SoundEffects.onHardDrop(); hardDrop();     }
+                        case KeyEvent.VK_C      -> { SoundEffects.onRotate();   rotatePieceCounter();  }
+                        case KeyEvent.VK_P      -> togglePause();
+                        case KeyEvent.VK_ESCAPE -> { SoundEffects.stopBackgroundMusic(); frame.showStartScreen();} //exit game
                     }
                 }
             });
