@@ -3,6 +3,8 @@ import javax.swing.*;
 
 public class UserInterface {
     static final Color BG = new Color(252, 250, 245);
+    static final Color BOARD_BG = new Color(25, 25, 25);
+    static final Color BORDER = new Color(120, 120, 120);
 
     private static Font uiFont(int size) {
         return new Font("Segoe UI Semibold", Font.BOLD, size);
@@ -142,13 +144,13 @@ public class UserInterface {
             add(title);
             RoundBtn startBtn = new RoundBtn("START", btnColors[0]);
             startBtn.setBounds(180, 180, 180, 55);
-            startBtn.addActionListener(e -> frame.showModeSelect());
+            startBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showModeSelect(); });
             RoundBtn highBtn = new RoundBtn("HIGH SCORE", btnColors[1]);
             highBtn.setBounds(180, 260, 180, 55);
-            highBtn.addActionListener(e -> frame.showHighScores());
+            highBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showHighScores(); });
             RoundBtn exitBtn = new RoundBtn("EXIT", btnColors[2]);
             exitBtn.setBounds(180, 340, 180, 55);
-            exitBtn.addActionListener(e -> System.exit(0));
+            exitBtn.addActionListener(e -> { SoundEffects.onMenuClick(); System.exit(0); });
             add(startBtn);
             add(highBtn);
             add(exitBtn);
@@ -159,7 +161,8 @@ public class UserInterface {
 
     public static class ModeSelectScreen extends JPanel {
         private final TetrisGame.TetrisFrame frame;
-        private TetrisGame.GameModes.GameMode selectedMode = new TetrisGame.GameModes.StandardMode();
+        private GameModes.GameMode selectedMode = new GameModes.StandardMode();
+        private final RoundBtn[] modeButtons = new RoundBtn[4];
 
         public ModeSelectScreen(TetrisGame.TetrisFrame frame) {
             this.frame = frame;
@@ -171,11 +174,11 @@ public class UserInterface {
             heading.setBounds(160, 40, 220, 60);
             add(heading);
 
-            TetrisGame.GameModes.GameMode[] modes = {
-                new TetrisGame.GameModes.StandardMode(), 
-                new TetrisGame.GameModes.FourtyLines(),
-                new TetrisGame.GameModes.TimeTrial(), 
-                new TetrisGame.GameModes.ZenMode()
+            GameModes.GameMode[] modes = {
+                new GameModes.StandardMode(), 
+                new GameModes.FourtyLines(),
+                new GameModes.TimeTrial(), 
+                new GameModes.ZenMode()
             };
             String[] modeNames = {"STANDARD", "40 LINES", "TIME TRIAL", "ZEN"};
 
@@ -185,20 +188,37 @@ public class UserInterface {
                 btn.setBounds(180, 130 + i * 70, 180, 50);
                 btn.addActionListener(e -> {
                     selectedMode = modes[idx];
+                    updateSelection(idx);
                 });
+                modeButtons[i] = btn;
                 add(btn);
             }
 
+            updateSelection(0);
+
             ArrowBtn backBtn = new ArrowBtn("left", btnColors[4]);
             backBtn.setBounds(50, 500, 120, 50);
-            backBtn.addActionListener(e -> frame.showStartScreen());
+            backBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showStartScreen(); });
 
             ArrowBtn nextBtn = new ArrowBtn("right", btnColors[5]);
             nextBtn.setBounds(370, 500, 120, 50);
-            nextBtn.addActionListener(e -> frame.showDifficultySelect(selectedMode));
+            nextBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showDifficultySelect(selectedMode); });
 
             add(backBtn);
             add(nextBtn);
+        }
+
+        private void updateSelection(int selectedIndex) {
+            for (int i = 0; i < modeButtons.length; i++) {
+                RoundBtn btn = modeButtons[i];
+                if (i == selectedIndex) {
+                    btn.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+                    btn.setBorderPainted(false);
+                } else {
+                    btn.setBorder(BorderFactory.createLineBorder(Color.WHITE, 5));
+                    btn.setBorderPainted(true);
+                }
+            }
         }
     }
 
@@ -206,8 +226,8 @@ public class UserInterface {
 
     public static class DifficultyScreen extends JPanel {
         private final TetrisGame.TetrisFrame frame;
-        private final TetrisGame.GameModes.GameMode mode;
-        public DifficultyScreen(TetrisGame.TetrisFrame frame, TetrisGame.GameModes.GameMode mode) {
+        private final GameModes.GameMode mode;
+        public DifficultyScreen(TetrisGame.TetrisFrame frame, GameModes.GameMode mode) {
             this.frame = frame;
             this.mode = mode;
             setBackground(BG);
@@ -218,16 +238,16 @@ public class UserInterface {
             add(heading);
             RoundBtn slowBtn = new RoundBtn("SLOW", btnColors[0]);
             slowBtn.setBounds(180, 150, 180, 55);
-            slowBtn.addActionListener(e -> frame.startGame(mode, TetrisGame.GameModes.Difficulty.SLOW));
+            slowBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.startGame(mode, GameModes.Difficulty.SLOW); });
             RoundBtn medBtn = new RoundBtn("MEDIUM", btnColors[1]);
             medBtn.setBounds(180, 230, 180, 55);
-            medBtn.addActionListener(e -> frame.startGame(mode, TetrisGame.GameModes.Difficulty.MEDIUM));
+            medBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.startGame(mode, GameModes.Difficulty.MEDIUM); });
             RoundBtn fastBtn = new RoundBtn("FAST", btnColors[2]);
             fastBtn.setBounds(180, 310, 180, 55);
-            fastBtn.addActionListener(e -> frame.startGame(mode, TetrisGame.GameModes.Difficulty.FAST));
+            fastBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.startGame(mode, GameModes.Difficulty.FAST); });
             ArrowBtn backBtn = new ArrowBtn("left", btnColors[4]);
             backBtn.setBounds(50, 500, 120, 50);
-            backBtn.addActionListener(e -> frame.showModeSelect());
+            backBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showModeSelect(); });
             add(slowBtn);
             add(medBtn);
             add(fastBtn);
@@ -251,10 +271,10 @@ public class UserInterface {
             
             // Get scores for each GAME MODE
             
-            int standardScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.MEDIUM);
-            int fortyLinesScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.MEDIUM) + 500;
-            int timeTrialScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.FAST) + 200;
-            int zenScore = TetrisGame.HighScoreManager.getHighScore(TetrisGame.GameModes.Difficulty.SLOW);
+            int standardScore = TetrisGame.HighScoreManager.getHighScore(new GameModes.StandardMode());
+            int fortyLinesScore = TetrisGame.HighScoreManager.getHighScore(new GameModes.FourtyLines()) + 500;
+            int timeTrialScore = TetrisGame.HighScoreManager.getHighScore(new GameModes.TimeTrial()) + 200;
+            int zenScore = TetrisGame.HighScoreManager.getHighScore(new GameModes.ZenMode());
             
             // Show GAME MODE names with their scores
             ScoreCard standardCard = new ScoreCard("STANDARD", standardScore, btnColors[0]);
@@ -275,7 +295,7 @@ public class UserInterface {
             
             ArrowBtn backBtn = new ArrowBtn("left", btnColors[4]);
             backBtn.setBounds(50, 500, 120, 50);
-            backBtn.addActionListener(e -> frame.showStartScreen());
+            backBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showStartScreen(); });
             add(backBtn);
         }
     }
@@ -285,7 +305,7 @@ public class UserInterface {
     public static class GameOverScreen extends JPanel {
         private final TetrisGame.TetrisFrame frame;
         public GameOverScreen(TetrisGame.TetrisFrame frame, String[][] stats,
-                              TetrisGame.GameModes.GameMode mode, TetrisGame.GameModes.Difficulty difficulty) {
+                              GameModes.GameMode mode, GameModes.Difficulty difficulty) {
             this.frame = frame;
             setBackground(BG);
             setPreferredSize(new Dimension(550, 600));
@@ -306,19 +326,19 @@ public class UserInterface {
             }
             RoundBtn replayBtn = new RoundBtn("PLAY AGAIN", btnColors[0]);
             replayBtn.setBounds(120, 450, 140, 50);
-            replayBtn.addActionListener(e -> frame.startGame(freshMode(mode), difficulty));
+            replayBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.startGame(freshMode(mode), difficulty); });
             RoundBtn menuBtn = new RoundBtn("MENU", btnColors[1]);
             menuBtn.setBounds(280, 450, 120, 50);
-            menuBtn.addActionListener(e -> frame.showStartScreen());
+            menuBtn.addActionListener(e -> { SoundEffects.onMenuClick(); frame.showStartScreen(); });
             add(replayBtn);
             add(menuBtn);
         }
-        private TetrisGame.GameModes.GameMode freshMode(TetrisGame.GameModes.GameMode mode) {
-            if (mode instanceof TetrisGame.GameModes.StandardMode) return new TetrisGame.GameModes.StandardMode();
-            if (mode instanceof TetrisGame.GameModes.FourtyLines) return new TetrisGame.GameModes.FourtyLines();
-            if (mode instanceof TetrisGame.GameModes.TimeTrial) return new TetrisGame.GameModes.TimeTrial();
-            if (mode instanceof TetrisGame.GameModes.ZenMode) return new TetrisGame.GameModes.ZenMode();
-            return new TetrisGame.GameModes.StandardMode();
+        private GameModes.GameMode freshMode(GameModes.GameMode mode) {
+            if (mode instanceof GameModes.StandardMode) return new GameModes.StandardMode();
+            if (mode instanceof GameModes.FourtyLines) return new GameModes.FourtyLines();
+            if (mode instanceof GameModes.TimeTrial) return new GameModes.TimeTrial();
+            if (mode instanceof GameModes.ZenMode) return new GameModes.ZenMode();
+            return new GameModes.StandardMode();
         }
     }
 }
